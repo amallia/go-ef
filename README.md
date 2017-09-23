@@ -1,4 +1,4 @@
-# go-ef
+# go-ef [![Build Status](https://travis-ci.org/amallia/go-ef.svg?branch=master)](https://travis-ci.org/amallia/go-ef)
 A Go implementation of the Elias-Fano encoding
 
 ### Example
@@ -7,6 +7,7 @@ package main
 import (
     "fmt"
     "github.com/amallia/go-ef"
+    "os"
 )
 
 func main() {
@@ -17,7 +18,11 @@ func main() {
 
     obj.Compress(array)
 
-    v := obj.Next()
+    v, err := obj.Next()
+    if err != nil {
+        fmt.Println(err)
+        os.Exit(1)
+    }
     fmt.Println(v) // 1
 
     obj.Next()
