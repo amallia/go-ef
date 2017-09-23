@@ -7,4 +7,4 @@ go:
   - 1.9
 
 script:
-- go test -v ./...
+- go test -v ef_test.go ef.go
