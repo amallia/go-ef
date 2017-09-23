@@ -1,13 +1,12 @@
 package ef
 
 import (
-	"github.com/amallia/go-ef"
 	"testing"
 )
 
 func TestMembership(t *testing.T) {
 	num := uint64(1000)
-	obj := ef.New(num, num)
+	obj := New(num, num)
 	array := make([]uint64, num)
 	for i := range array {
 		array[i] = uint64(i)
@@ -28,7 +27,7 @@ func TestMembership(t *testing.T) {
 
 func TestPosition(t *testing.T) {
 	num := uint64(1000)
-	obj := ef.New(num, num)
+	obj := New(num, num)
 	array := make([]uint64, num)
 	for i := range array {
 		array[i] = uint64(i)
@@ -44,7 +43,7 @@ func TestPosition(t *testing.T) {
 
 func TestReset(t *testing.T) {
 	num := uint64(1000)
-	obj := ef.New(num, num)
+	obj := New(num, num)
 	array := make([]uint64, num)
 	for i := range array {
 		array[i] = uint64(i)
