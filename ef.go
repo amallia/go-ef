@@ -77,6 +77,37 @@ func SetBits(b *bitset.BitSet, offset uint64, bits uint64, length uint64) {
 
 }
 
+func (ef *EliasFano) Move(position uint64) (uint64, error) {
+	if position >= ef.Size() {
+		return 0, errors.New("Out of bound")
+	}
+	if ef.position == position {
+		return ef.Value(), nil
+	}
+	if position < ef.position {
+		ef.Reset()
+	}
+	skip := position - ef.position
+	pos := uint(ef.high_bits_pos)
+	for i := uint64(0); i < skip; i++ {
+		pos, _ = ef.b.NextSet(pos + 1)
+	}
+	ef.high_bits_pos = uint64(pos)
+	ef.position = position
+	low := uint64(0)
+	offset := ef.lower_bits_offset + ef.position*ef.lower_bits
+	for i := uint64(0); i < ef.lower_bits; i++ {
+		if ef.b.Test(uint(offset + i + 1)) {
+			low++
+		}
+		low = low << 1
+	}
+	low = low >> 1
+	ef.cur_value = uint64(((ef.high_bits_pos - ef.position - 1) << ef.lower_bits) | low)
+	return ef.Value(), nil
+
+}
+
 func (ef *EliasFano) Next() (uint64, error) {
 	ef.position++
 	if ef.position >= ef.Size() {
@@ -107,18 +138,12 @@ func (ef *EliasFano) Position() uint64 {
 }
 
 func (ef *EliasFano) Reset() {
+	ef.high_bits_pos = 1
 	ef.position = 0
 }
 
 func (ef *EliasFano) Info() {
 	log.Printf(EFInfo, ef.universe, ef.n, ef.lower_bits, ef.higher_bits_length, ef.mask, ef.lower_bits_offset, ef.bv_len)
-}
-
-func round(a float64) int64 {
-	if a < 0 {
-		return int64(a - 0.5)
-	}
-	return int64(a + 0.5)
 }
 
 func (ef *EliasFano) Value() uint64 {
@@ -131,6 +156,13 @@ func (ef *EliasFano) Size() uint64 {
 
 func (ef *EliasFano) Bitsize() uint64 {
 	return uint64(ef.b.BinaryStorageSize())
+}
+
+func round(a float64) int64 {
+	if a < 0 {
+		return int64(a - 0.5)
+	}
+	return int64(a + 0.5)
 }
 
 func msb(x uint64) uint64 {
