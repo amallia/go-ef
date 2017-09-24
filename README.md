@@ -1,4 +1,4 @@
-# go-ef [![Build Status](https://travis-ci.org/amallia/go-ef.svg?branch=master)](https://travis-ci.org/amallia/go-ef)
+# go-ef [![Build Status](https://travis-ci.org/amallia/go-ef.svg?branch=master)](https://travis-ci.org/amallia/go-ef) [![GoDoc](https://godoc.org/github.com/amallia/go-ef?status.svg)](https://godoc.org/github.com/amallia/go-ef)
 A Go implementation of the Elias-Fano encoding
 
 ### Example
