@@ -92,20 +92,10 @@ func (ef *EliasFano) Move(position uint64) (uint64, error) {
 	for i := uint64(0); i < skip; i++ {
 		pos, _ = ef.b.NextSet(pos + 1)
 	}
-	ef.high_bits_pos = uint64(pos)
+	ef.high_bits_pos = uint64(pos - 1)
 	ef.position = position
-	low := uint64(0)
-	offset := ef.lower_bits_offset + ef.position*ef.lower_bits
-	for i := uint64(0); i < ef.lower_bits; i++ {
-		if ef.b.Test(uint(offset + i + 1)) {
-			low++
-		}
-		low = low << 1
-	}
-	low = low >> 1
-	ef.cur_value = uint64(((ef.high_bits_pos - ef.position - 1) << ef.lower_bits) | low)
+	ef.readCurrentValue()
 	return ef.Value(), nil
-
 }
 
 func (ef *EliasFano) Next() (uint64, error) {
@@ -113,22 +103,7 @@ func (ef *EliasFano) Next() (uint64, error) {
 	if ef.position >= ef.Size() {
 		return 0, errors.New("End reached")
 	}
-	pos := uint(ef.high_bits_pos)
-	if pos > 0 {
-		pos++
-	}
-	pos, _ = ef.b.NextSet(pos)
-	ef.high_bits_pos = uint64(pos)
-	low := uint64(0)
-	offset := ef.lower_bits_offset + ef.position*ef.lower_bits
-	for i := uint64(0); i < ef.lower_bits; i++ {
-		if ef.b.Test(uint(offset + i + 1)) {
-			low++
-		}
-		low = low << 1
-	}
-	low = low >> 1
-	ef.cur_value = uint64(((ef.high_bits_pos - ef.position - 1) << ef.lower_bits) | low)
+	ef.readCurrentValue()
 	return ef.Value(), nil
 
 }
@@ -138,8 +113,9 @@ func (ef *EliasFano) Position() uint64 {
 }
 
 func (ef *EliasFano) Reset() {
-	ef.high_bits_pos = 1
+	ef.high_bits_pos = 0
 	ef.position = 0
+	ef.readCurrentValue()
 }
 
 func (ef *EliasFano) Info() {
@@ -156,6 +132,25 @@ func (ef *EliasFano) Size() uint64 {
 
 func (ef *EliasFano) Bitsize() uint64 {
 	return uint64(ef.b.BinaryStorageSize())
+}
+
+func (ef *EliasFano) readCurrentValue() {
+	pos := uint(ef.high_bits_pos)
+	if pos > 0 {
+		pos++
+	}
+	pos, _ = ef.b.NextSet(pos)
+	ef.high_bits_pos = uint64(pos)
+	low := uint64(0)
+	offset := ef.lower_bits_offset + ef.position*ef.lower_bits
+	for i := uint64(0); i < ef.lower_bits; i++ {
+		if ef.b.Test(uint(offset + i + 1)) {
+			low++
+		}
+		low = low << 1
+	}
+	low = low >> 1
+	ef.cur_value = uint64(((ef.high_bits_pos - ef.position - 1) << ef.lower_bits) | low)
 }
 
 func round(a float64) int64 {
