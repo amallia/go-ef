@@ -1,7 +1,7 @@
 # go-ef 
 _A Go implementation of the Elias-Fano encoding_
 
-[![Build Status](https://travis-ci.org/amallia/go-ef.svg?branch=master)](https://travis-ci.org/amallia/go-ef) [![GoDoc](https://godoc.org/github.com/amallia/go-ef?status.svg)](https://godoc.org/github.com/amallia/go-ef) [![Go Report Card](https://goreportcard.com/badge/github.com/amallia/go-ef)](https://goreportcard.com/report/github.com/amallia/go-ef)
+[![Build Status](https://travis-ci.org/amallia/go-ef.svg?branch=master)](https://travis-ci.org/amallia/go-ef) [![GoDoc](https://godoc.org/github.com/amallia/go-ef?status.svg)](https://godoc.org/github.com/amallia/go-ef) [![Go Report Card](https://goreportcard.com/badge/github.com/amallia/go-ef)](https://goreportcard.com/report/github.com/amallia/go-ef) ![cover.run go](https://cover.run/go/github.com/amallia/go-ef.svg)
 ### Example
 ```go
 package main
