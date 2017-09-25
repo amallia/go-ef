@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	EFInfo = `Universe: %d
+	efInfo = `Universe: %d
 Elements: %d
 Lower_bits: %d
 Higher_bits_length: %d
@@ -18,33 +18,36 @@ Bitvector length: %d
 `
 )
 
+// EliasFano codec structure
 type EliasFano struct {
-	universe           uint64
-	n                  uint64
-	lower_bits         uint64
-	higher_bits_length uint64
-	mask               uint64
-	lower_bits_offset  uint64
-	bv_len             uint64
-	b                  *bitset.BitSet
-	cur_value          uint64
-	position           uint64
-	high_bits_pos      uint64
+	universe         uint64
+	n                uint64
+	lowerBits        uint64
+	higherBitsLength uint64
+	mask             uint64
+	lowerBitsOffset  uint64
+	bvLen            uint64
+	b                *bitset.BitSet
+	curValue         uint64
+	position         uint64
+	highBitsPos      uint64
 }
 
+// New creates a new empty EliasFano object
 func New(universe uint64, n uint64) *EliasFano {
-	var lower_bits uint64
-	if lower_bits = 0; universe > n {
-		lower_bits = msb(universe / n)
+	var lowerBits uint64
+	if lowerBits = 0; universe > n {
+		lowerBits = msb(universe / n)
 	}
-	higher_bits_length := n + (universe >> lower_bits) + 2
-	mask := (uint64(1) << lower_bits) - 1
-	lower_bits_offset := higher_bits_length
-	bv_len := lower_bits_offset + n*uint64(lower_bits)
-	b := bitset.New(uint(bv_len))
-	return &EliasFano{universe, n, lower_bits, higher_bits_length, mask, lower_bits_offset, bv_len, b, 0, 0, 0}
+	higherBitsLength := n + (universe >> lowerBits) + 2
+	mask := (uint64(1) << lowerBits) - 1
+	lowerBitsOffset := higherBitsLength
+	bvLen := lowerBitsOffset + n*uint64(lowerBits)
+	b := bitset.New(uint(bvLen))
+	return &EliasFano{universe, n, lowerBits, higherBitsLength, mask, lowerBitsOffset, bvLen, b, 0, 0, 0}
 }
 
+// Compress a monotone increasing array of positive integers. It sets the position at the beginning.
 func (ef *EliasFano) Compress(elems []uint64) {
 	last := uint64(0)
 
@@ -55,28 +58,20 @@ func (ef *EliasFano) Compress(elems []uint64) {
 		if elem > ef.universe {
 			log.Fatalf("Element %d is greater than universe", elem)
 		}
-		high := (elem >> ef.lower_bits) + uint64(i) + 1
+		high := (elem >> ef.lowerBits) + uint64(i) + 1
 		low := elem & ef.mask
 		ef.b.Set(uint(high))
-		offset := ef.lower_bits_offset + uint64(i)*ef.lower_bits
-		SetBits(ef.b, offset, low, ef.lower_bits)
+		offset := ef.lowerBitsOffset + uint64(i)*ef.lowerBits
+		setBits(ef.b, offset, low, ef.lowerBits)
 		last = elem
 		if i == 0 {
-			ef.cur_value = elem
-			ef.high_bits_pos = high
+			ef.curValue = elem
+			ef.highBitsPos = high
 		}
 	}
 }
 
-func SetBits(b *bitset.BitSet, offset uint64, bits uint64, length uint64) {
-	// TODO: Store reversed
-	for i := uint64(0); i < length; i++ {
-		val := bits & (1 << (length - i - 1))
-		b.SetTo(uint(offset+i+1), val > 0)
-	}
-
-}
-
+// Move the internal iterator to the given position and returns a value or an error.
 func (ef *EliasFano) Move(position uint64) (uint64, error) {
 	if position >= ef.Size() {
 		return 0, errors.New("Out of bound")
@@ -88,16 +83,17 @@ func (ef *EliasFano) Move(position uint64) (uint64, error) {
 		ef.Reset()
 	}
 	skip := position - ef.position
-	pos := uint(ef.high_bits_pos)
+	pos := uint(ef.highBitsPos)
 	for i := uint64(0); i < skip; i++ {
 		pos, _ = ef.b.NextSet(pos + 1)
 	}
-	ef.high_bits_pos = uint64(pos - 1)
+	ef.highBitsPos = uint64(pos - 1)
 	ef.position = position
 	ef.readCurrentValue()
 	return ef.Value(), nil
 }
 
+// Next moves the internal iterator to the next position and returns a value or an error.
 func (ef *EliasFano) Next() (uint64, error) {
 	ef.position++
 	if ef.position >= ef.Size() {
@@ -108,49 +104,63 @@ func (ef *EliasFano) Next() (uint64, error) {
 
 }
 
+// Position return the current position of the internal iterator.
 func (ef *EliasFano) Position() uint64 {
 	return ef.position
 }
 
+// Reset moves the internal iterator to the beginning.
 func (ef *EliasFano) Reset() {
-	ef.high_bits_pos = 0
+	ef.highBitsPos = 0
 	ef.position = 0
 	ef.readCurrentValue()
 }
 
+// Info prints info regarding the EliasFano codec.
 func (ef *EliasFano) Info() {
-	log.Printf(EFInfo, ef.universe, ef.n, ef.lower_bits, ef.higher_bits_length, ef.mask, ef.lower_bits_offset, ef.bv_len)
+	log.Printf(efInfo, ef.universe, ef.n, ef.lowerBits, ef.higherBitsLength, ef.mask, ef.lowerBitsOffset, ef.bvLen)
 }
 
+// Value returns the value of the current element.
 func (ef *EliasFano) Value() uint64 {
-	return ef.cur_value
+	return ef.curValue
 }
 
+// Size returns the number of elements encoded.
 func (ef *EliasFano) Size() uint64 {
 	return ef.n
 }
 
+// Bitsize returns the size of the internal bitvector.
 func (ef *EliasFano) Bitsize() uint64 {
 	return uint64(ef.b.BinaryStorageSize())
 }
 
+func setBits(b *bitset.BitSet, offset uint64, bits uint64, length uint64) {
+	for i := uint64(0); i < length; i++ {
+		val := bits & (1 << (length - i - 1))
+		b.SetTo(uint(offset+i+1), val > 0)
+	}
+
+}
+
 func (ef *EliasFano) readCurrentValue() {
-	pos := uint(ef.high_bits_pos)
+	pos := uint(ef.highBitsPos)
 	if pos > 0 {
 		pos++
 	}
 	pos, _ = ef.b.NextSet(pos)
-	ef.high_bits_pos = uint64(pos)
+	ef.highBitsPos = uint64(pos)
 	low := uint64(0)
-	offset := ef.lower_bits_offset + ef.position*ef.lower_bits
-	for i := uint64(0); i < ef.lower_bits; i++ {
+	offset := ef.lowerBitsOffset + ef.position*ef.lowerBits
+	for i := uint64(0); i < ef.lowerBits; i++ {
 		if ef.b.Test(uint(offset + i + 1)) {
 			low++
 		}
 		low = low << 1
 	}
 	low = low >> 1
-	ef.cur_value = uint64(((ef.high_bits_pos - ef.position - 1) << ef.lower_bits) | low)
+	ef.curValue = uint64(((ef.highBitsPos - ef.position - 1) << ef.lowerBits) | low)
 }
 
 func round(a float64) int64 {
